@@ -14,9 +14,12 @@
 
 static Window *window;
 static TextLayer *text_layer;
+static BitmapLayer *image_layer;
 
 /*static GRect window_frame;*/
 
+static GBitmap *grenadeRegular;
+static GBitmap *grenadePulled;
 static AppTimer *timer;
 
 bool isActive = false;
@@ -62,6 +65,8 @@ static void click_config_provider(void *context) {
 static void click_handler_up(ClickRecognizerRef recognizer, void *context) {
   isActive = !isActive;
   if (isActive) {
+    vibes_short_pulse();
+    bitmap_layer_set_bitmap(image_layer, grenadePulled);
     accel_service_set_sampling_rate(ACCEL_SAMPLING_10HZ);
     accel_data_service_subscribe(0, NULL);
   }
@@ -109,10 +114,19 @@ static void window_load(Window *window) {
   // GRect frame = window_frame = layer_get_frame(window_layer);
 
   GRect bounds = layer_get_bounds(window_layer);
-  text_layer = text_layer_create((GRect) { .origin = { 0, bounds.size.h / 2 - 10 }, .size = { bounds.size.w, 20 } });
-  text_layer_set_text(text_layer, "press to pull pin --->");
+  text_layer = text_layer_create((GRect) { .origin = { 0, 0 }, .size = { bounds.size.w, 36 } });
+  text_layer_set_text(text_layer, ">");
   text_layer_set_text_alignment(text_layer, GTextAlignmentRight);
+  text_layer_set_font(text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
   layer_add_child(window_layer, text_layer_get_layer(text_layer));
+
+  grenadeRegular = gbitmap_create_with_resource(RESOURCE_ID_GRENADE_REG);
+  grenadePulled = gbitmap_create_with_resource(RESOURCE_ID_GRENADE_PULLED);
+
+  image_layer = bitmap_layer_create(bounds);
+  bitmap_layer_set_bitmap(image_layer, grenadeRegular);
+  bitmap_layer_set_alignment(image_layer, GAlignCenter);
+  layer_add_child(window_layer, bitmap_layer_get_layer(image_layer));
 
 }
 

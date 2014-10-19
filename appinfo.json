@@ -12,6 +12,23 @@
     "dummy": 0
   },
   "resources": {
-    "media": []
+    "media": [
+      {
+        "type": "png",
+        "name": "PPG_MENU_ICON",
+        "file": "images/ppg-icon.png",
+        "menuIcon": true
+      },
+      {
+        "type": "png",
+        "name": "GRENADE_REG",
+        "file": "images/grenade.png"
+      },
+      {
+        "type": "png",
+        "name": "GRENADE_PULLED",
+        "file": "images/grenade-pull.png"
+      }
+    ]
   }
 }
