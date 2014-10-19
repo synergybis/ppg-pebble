@@ -256,6 +256,9 @@ static void init(void) {
 
 static void deinit(void) {
   accel_data_service_unsubscribe();
+  gbitmap_destroy(grenadeRegular);
+  gbitmap_destroy(grenadePulled);
+  bitmap_layer_destroy(image_layer);
   window_destroy(window);
 }
 
