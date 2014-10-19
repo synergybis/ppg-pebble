@@ -9,8 +9,9 @@
 
 #define ACCEL_REFRESH 100
 #define HISTORY_MAX 144
-#define SOUND_KEY 123456789
+#define SOUND_KEY 1234567890
 #define NADE_REFRESH 5 * 1000
+#define NADE_THRESH  1000 //mG
 
 /* VARIABLES & FIELDS INTIALIZERS */
 
@@ -49,13 +50,12 @@ static float numeric_square(const float onalright) {
   return onalright * onalright;
 }
 static bool scanAccelProfileGrenade(void) {
-  const int THRESH = 1;
   float sum = 0.0;
   sum += numeric_square(history[last_x].x);
   sum += numeric_square(history[last_x].y);
   sum += numeric_square(history[last_x].z);
 
-  if (numeric_sqrt(sum) > THRESH) {
+  if (numeric_sqrt(sum) > NADE_THRESH) {
     return true;
   } else {
     return false;
