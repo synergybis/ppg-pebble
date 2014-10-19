@@ -20,7 +20,7 @@ static void playExplosion();
 
 
 static bool scanAccelProfileGrenade(void);
-static bool scanAccelProfileBroFist(void);
+/*static bool scanAccelProfileBroFist(void);*/
 
 
 int main(void);

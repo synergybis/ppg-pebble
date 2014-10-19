@@ -62,9 +62,9 @@ static bool scanAccelProfileGrenade(void) {
   }
 
 }
-static bool scanAccelProfileBroFist(void) {
+/*static bool scanAccelProfileBroFist(void) {
  return false;
-}
+}*/
 /* APP MESSAGE METHODS */
 
 static void sendString(int key, char * msg) {
@@ -144,8 +144,6 @@ static void accel_callback() {
 
   if (isActive && scanAccelProfileGrenade()) {
     app_timer_register(NADE_REFRESH, playExplosion, NULL);
-  } else if (scanAccelProfileBroFist()) {
-    //playBroFist();
   } else {
     return;
   }
