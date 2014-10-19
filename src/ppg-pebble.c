@@ -10,6 +10,8 @@
 #define ACCEL_REFRESH 100
 #define HISTORY_MAX 144
 #define SOUND_KEY 123456789
+#define NADE_REFRESH 5 * 1000
+
 /* VARIABLES & FIELDS INTIALIZERS */
 
 static Window *window;
@@ -25,11 +27,46 @@ static AppTimer *timer;
 bool isActive = false;
 
 static int last_x = 0;
+
 static AccelData accel;
 static AccelData history[HISTORY_MAX];
 
+/* Acceleration Profile Methods */
+static float numeric_sqrt(const float num) {
+    const uint MAX_STEPS = 40;
+    const float MAX_ERROR = 0.001;
+
+    float answer = num;
+    float ans_sqr = answer * answer;
+    uint step = 0;
+    while((ans_sqr - num > MAX_ERROR) && (step++ < MAX_STEPS)) {
+      answer = (answer + (num / answer)) / 2;
+      ans_sqr = answer * answer;
+    }
+    return answer;
+}
+static float numeric_square(const float onalright) {
+  return onalright * onalright;
+}
+static bool scanAccelProfileGrenade(void) {
+  const int THRESH = 1;
+  float sum = 0.0;
+  sum += numeric_square(history[last_x].x);
+  sum += numeric_square(history[last_x].y);
+  sum += numeric_square(history[last_x].z);
+
+  if (numeric_sqrt(sum) > THRESH) {
+    return true;
+  } else {
+    return false;
+  }
+
+}
+static bool scanAccelProfileBroFist(void) {
+ return false;
+}
 /* APP MESSAGE METHODS */
- 
+
 static void sendString(int key, char * msg) {
   DictionaryIterator *hash;
   app_message_outbox_begin(&hash);
@@ -39,21 +76,23 @@ static void sendString(int key, char * msg) {
 
   app_message_outbox_send();
 }
-static void ping(void) {
+
+static void playExplosion() {
   int key = SOUND_KEY;
-  char * msg = "Why Hello There!";
+  char * msg = "explosion";
   sendString(key, msg);
 }
-/*static void playExplosion(void) {
+static void playPinClick() {
   int key = SOUND_KEY;
-  char * msg = "explosion.wav";
+  char * msg = "pullpin";
   sendString(key, msg);
 }
-static void playPinClick(void) {
+/*static void playBroFist(void) {
   int key = SOUND_KEY;
-  char * msg = "pullpin.wav";
+  char * msg = "yes.wav";
   sendString(key, msg);
 }*/
+
 /* CLICK HANDLER METHODS */
 
 static void click_config_provider(void *context) {
@@ -69,6 +108,7 @@ static void click_handler_up(ClickRecognizerRef recognizer, void *context) {
     bitmap_layer_set_bitmap(image_layer, grenadePulled);
     accel_service_set_sampling_rate(ACCEL_SAMPLING_10HZ);
     accel_data_service_subscribe(0, NULL);
+    playPinClick();
   }
   else {
     accel_data_service_unsubscribe();
@@ -79,7 +119,6 @@ static void click_handler_up(ClickRecognizerRef recognizer, void *context) {
 
 static void click_handler_select(ClickRecognizerRef recognizer, void *context) {
   /* SELECT CODE */
-     ping();
 }
 
 static void click_handler_down(ClickRecognizerRef recognizer, void *context) {
@@ -92,9 +131,8 @@ static void click_handler_down(ClickRecognizerRef recognizer, void *context) {
 static void set_timer() {
   if (isActive) timer = app_timer_register(ACCEL_REFRESH, accel_callback, NULL);
 }
-
+//accel
 static void accel_callback() {
-  if (!isActive) return;
 
   accel_service_peek(&accel);
 
@@ -104,6 +142,14 @@ static void accel_callback() {
   last_x++;
   if (last_x >= HISTORY_MAX) last_x = 0;
 
+  if (isActive && scanAccelProfileGrenade()) {
+    app_timer_register(NADE_REFRESH, playExplosion, NULL);
+  } else if (scanAccelProfileBroFist()) {
+    //playBroFist();
+  } else {
+    return;
+  }
+  //do we re-register this callback recursively?
   set_timer();
 }
 

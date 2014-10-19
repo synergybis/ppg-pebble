@@ -10,8 +10,17 @@ static void window_load(Window *window);
 static void window_unload(Window *window);
 static void init(void);
 static void deinit(void);
-static void ping(void);
-/*static void playPinClick(void);
-static void playExplosion(void);*/
+
+/*
+static void playBroFist(void);
+static void playLaser(void);
+*/
+static void playPinClick(void);
+static void playExplosion();
+
+
+static bool scanAccelProfileGrenade(void);
+static bool scanAccelProfileBroFist(void);
+
 
 int main(void);
