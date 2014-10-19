@@ -8,21 +8,23 @@
 #define ACCEL_STEP_MS 50
 
 #define ACCEL_REFRESH 100
-#define HISTORY_MAX 144
+#define HISTORY_MAX 100
 #define SOUND_KEY 1234567890
-#define NADE_REFRESH 5 * 1000
+#define NADE_TIMER 5000 //ms
 #define NADE_THRESH  1000 //mG
 
 /* VARIABLES & FIELDS INTIALIZERS */
 
 static Window *window;
 static TextLayer *text_layer;
+static TextLayer *debug_layer;
 static BitmapLayer *image_layer;
 
 /*static GRect window_frame;*/
 
 static GBitmap *grenadeRegular;
 static GBitmap *grenadePulled;
+static AppTimer *thrownTimer;
 static AppTimer *timer;
 
 bool isActive = false;
@@ -54,13 +56,7 @@ static bool scanAccelProfileGrenade(void) {
   sum += numeric_square(history[last_x].x);
   sum += numeric_square(history[last_x].y);
   sum += numeric_square(history[last_x].z);
-
-  if (numeric_sqrt(sum) > NADE_THRESH) {
-    return true;
-  } else {
-    return false;
-  }
-
+  return (history[last_x].y > NADE_THRESH);
 }
 /*static bool scanAccelProfileBroFist(void) {
  return false;
@@ -81,11 +77,15 @@ static void playExplosion() {
   int key = SOUND_KEY;
   char * msg = "explosion";
   sendString(key, msg);
+  app_timer_cancel(thrownTimer);
+  isActive = !isActive;
+  text_layer_set_text(debug_layer, "BOOM");
 }
 static void playPinClick() {
   int key = SOUND_KEY;
   char * msg = "pullpin";
   sendString(key, msg);
+  text_layer_set_text(debug_layer, "PULLED");
 }
 /*static void playBroFist(void) {
   int key = SOUND_KEY;
@@ -102,19 +102,15 @@ static void click_config_provider(void *context) {
 }
 
 static void click_handler_up(ClickRecognizerRef recognizer, void *context) {
-  isActive = !isActive;
-  if (isActive) {
+  if (!isActive) {
+    isActive = !isActive;
     vibes_short_pulse();
     bitmap_layer_set_bitmap(image_layer, grenadePulled);
     accel_service_set_sampling_rate(ACCEL_SAMPLING_10HZ);
     accel_data_service_subscribe(0, NULL);
     playPinClick();
+    set_timer();
   }
-  else {
-    accel_data_service_unsubscribe();
-  }
-
-  set_timer();
 }
 
 static void click_handler_select(ClickRecognizerRef recognizer, void *context) {
@@ -139,16 +135,23 @@ static void accel_callback() {
   history[last_x].x = accel.x;
   history[last_x].y = accel.y;
   history[last_x].z = accel.z;
-  last_x++;
-  if (last_x >= HISTORY_MAX) last_x = 0;
-
   if (isActive && scanAccelProfileGrenade()) {
-    app_timer_register(NADE_REFRESH, playExplosion, NULL);
-  } else {
-    return;
+    thrownTimer = app_timer_register(NADE_TIMER, playExplosion, NULL);
+    accel_data_service_unsubscribe();
+    last_x = 0;
+    text_layer_set_text(debug_layer, "THROWN");
   }
-  //do we re-register this callback recursively?
-  set_timer();
+  else {
+    last_x++;
+    if (last_x >= HISTORY_MAX) {
+      playExplosion();
+      accel_data_service_unsubscribe();
+      last_x = 0;
+    }
+    else {
+      set_timer();
+    }
+  }
 }
 
 /* WINDOW LOAD & UNLOAD METHODS */
@@ -171,6 +174,11 @@ static void window_load(Window *window) {
   bitmap_layer_set_bitmap(image_layer, grenadeRegular);
   bitmap_layer_set_alignment(image_layer, GAlignCenter);
   layer_add_child(window_layer, bitmap_layer_get_layer(image_layer));
+
+  debug_layer = text_layer_create((GRect) { .origin = { 0, bounds.size.h - 20 }, .size = { bounds.size.w, 20 } });
+  text_layer_set_text(debug_layer, "debug");
+  text_layer_set_text_alignment(debug_layer, GTextAlignmentRight);
+  layer_add_child(window_layer, text_layer_get_layer(debug_layer));
 
 }
 
