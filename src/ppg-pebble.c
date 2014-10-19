@@ -56,6 +56,13 @@ static bool scanAccelProfileGrenade(void) {
   sum += numeric_square(history[last_x].x);
   sum += numeric_square(history[last_x].y);
   sum += numeric_square(history[last_x].z);
+
+  static char buffs[3][32];
+  snprintf(buffs[0], sizeof("X: XXXXX"), "X: %d", history[last_x].x);
+  snprintf(buffs[1], sizeof("Y: YYYYY"), "Y: %d", history[last_x].y);
+  snprintf(buffs[2], sizeof("Z: ZZZZZ"), "Z: %d", history[last_x].z);
+  text_layer_set_text(debug_layer, buffs[0]);
+
   return (history[last_x].y > NADE_THRESH);
 }
 /*static bool scanAccelProfileBroFist(void) {
