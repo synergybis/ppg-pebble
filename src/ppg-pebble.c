@@ -10,9 +10,10 @@
 #define ACCEL_REFRESH 100
 #define HISTORY_MAX 100
 #define SOUND_KEY 1234567890
+#define ACCEL_KEY 987654321
 #define NADE_TIMER 5000 //ms
-#define NADE_THRESH  2000 //mG
-#define WHOOSH_THRESH 3000 //mG
+#define NADE_THRESH  1500 //mG
+#define WHOOSH_THRESH 2000 //mG
 
 /* VARIABLES & FIELDS INTIALIZERS */
 
@@ -83,7 +84,9 @@ static void sendString(int key, char * msg) {
 
   app_message_outbox_send();
 }
-
+static void sendAcceleration(char * msg) {
+  sendString(ACCEL_KEY, msg);
+}
 static void playExplosion() {
   int key = SOUND_KEY;
   char * msg = "explosion";
