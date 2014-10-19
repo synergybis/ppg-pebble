@@ -8,5 +8,6 @@ static void window_load(Window *window);
 static void window_unload(Window *window);
 static void init(void);
 static void deinit(void);
+static void ping(void);
 
 int main(void);

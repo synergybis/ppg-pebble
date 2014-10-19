@@ -13,6 +13,17 @@ static TextLayer *text_layer;
 static GRect window_frame;
 
 static AppTimer *timer;
+/* APP MESSAGE METHODS */
+
+static void ping(void) {
+  DictionaryIterator *hash;
+  app_message_outbox_begin(&hash);
+
+  Tuplet msg =  TupletCString(123456789, "well hi there!");
+  dict_write_tuplet(hash, &msg);
+
+  app_message_outbox_send();
+}
 
 /* CLICK HANDLER METHODS */
 
@@ -28,10 +39,12 @@ static void click_handler_up(ClickRecognizerRef recognizer, void *context) {
 
 static void click_handler_select(ClickRecognizerRef recognizer, void *context) {
   /* SELECT CODE */
+     ping();
 }
 
 static void click_handler_down(ClickRecognizerRef recognizer, void *context) {
   /* DOWN CODE */
+
 }
 
 /* WINDOW LOAD & UNLOAD METHODS */
@@ -51,10 +64,33 @@ static void window_load(Window *window) {
 static void window_unload(Window *window) {
   text_layer_destroy(text_layer);
 }
+void out_sent_handler(DictionaryIterator *sent, void *context) {
+// outgoing message was delivered
+}
 
 /* MAIN LOOP METHODS */
 
+
+void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
+// outgoing message failed
+}
+
+
+void in_received_handler(DictionaryIterator *received, void *context) {
+// incoming message received
+}
+
+
+void in_dropped_handler(AppMessageResult reason, void *context) {
+// incoming message dropped
+}
+
 static void init(void) {
+   app_message_register_inbox_received(in_received_handler);
+   app_message_register_inbox_dropped(in_dropped_handler);
+   app_message_register_outbox_sent(out_sent_handler);
+   app_message_register_outbox_failed(out_failed_handler);
+
   window = window_create();
   window_set_click_config_provider(window, click_config_provider);
   window_set_window_handlers(window, (WindowHandlers) {
@@ -62,6 +98,11 @@ static void init(void) {
     .unload = window_unload
   });
   window_stack_push(window, true /* Animated */);
+
+   const uint32_t inbound_size = 64;
+   const uint32_t outbound_size = 64;
+   app_message_open(inbound_size, outbound_size);
+
 
 }
 
