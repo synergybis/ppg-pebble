@@ -9,13 +9,13 @@
 
 #define ACCEL_REFRESH 100
 #define HISTORY_MAX 144
-
+#define SOUND_KEY 123456789
 /* VARIABLES & FIELDS INTIALIZERS */
 
 static Window *window;
 static TextLayer *text_layer;
 
-static GRect window_frame;
+/*static GRect window_frame;*/
 
 static AppTimer *timer;
 
@@ -27,16 +27,30 @@ static AccelData history[HISTORY_MAX];
 
 /* APP MESSAGE METHODS */
  
-static void ping(void) {
+static void sendString(int key, char * msg) {
   DictionaryIterator *hash;
   app_message_outbox_begin(&hash);
 
-  Tuplet msg =  TupletCString(123456789, "well hi there!");
-  dict_write_tuplet(hash, &msg);
+  Tuplet row =  TupletCString(key, msg);
+  dict_write_tuplet(hash, &row);
 
   app_message_outbox_send();
 }
-
+static void ping(void) {
+  int key = SOUND_KEY;
+  char * msg = "Why Hello There!";
+  sendString(key, msg);
+}
+/*static void playExplosion(void) {
+  int key = SOUND_KEY;
+  char * msg = "explosion.wav";
+  sendString(key, msg);
+}
+static void playPinClick(void) {
+  int key = SOUND_KEY;
+  char * msg = "pullpin.wav";
+  sendString(key, msg);
+}*/
 /* CLICK HANDLER METHODS */
 
 static void click_config_provider(void *context) {
@@ -95,7 +109,7 @@ static void window_load(Window *window) {
   // GRect frame = window_frame = layer_get_frame(window_layer);
 
   GRect bounds = layer_get_bounds(window_layer);
-  text_layer = text_layer_create((GRect) { .origin = { 0, 0 }, .size = { bounds.size.w, 20 } });
+  text_layer = text_layer_create((GRect) { .origin = { 0, bounds.size.h / 2 - 10 }, .size = { bounds.size.w, 20 } });
   text_layer_set_text(text_layer, "press to pull pin --->");
   text_layer_set_text_alignment(text_layer, GTextAlignmentRight);
   layer_add_child(window_layer, text_layer_get_layer(text_layer));

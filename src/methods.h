@@ -11,5 +11,7 @@ static void window_unload(Window *window);
 static void init(void);
 static void deinit(void);
 static void ping(void);
+/*static void playPinClick(void);
+static void playExplosion(void);*/
 
 int main(void);
