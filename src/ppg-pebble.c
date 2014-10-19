@@ -163,11 +163,6 @@ static void accel_callback() {
     last_x = 0;
     text_layer_set_text(feedback_layer, "THROWN");
   }
-  else if (isActive && scanAccelProfileWhoosh()) {
-    playWhoosh();
-    last_x = 0;
-
-  }
   else {
     last_x++;
     if (last_x >= HISTORY_MAX) {
