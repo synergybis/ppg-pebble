@@ -7,15 +7,26 @@
 #define ACCEL_RATIO 0.05
 #define ACCEL_STEP_MS 50
 
+#define ACCEL_REFRESH 100
+#define HISTORY_MAX 144
+
+/* VARIABLES & FIELDS INTIALIZERS */
+
 static Window *window;
 static TextLayer *text_layer;
 
 static GRect window_frame;
 
 static AppTimer *timer;
+
+bool isActive = false;
+
+static int last_x = 0;
+static AccelData accel;
+static AccelData history[HISTORY_MAX];
+
 /* APP MESSAGE METHODS */
-
-
+ 
 static void ping(void) {
   DictionaryIterator *hash;
   app_message_outbox_begin(&hash);
@@ -35,7 +46,16 @@ static void click_config_provider(void *context) {
 }
 
 static void click_handler_up(ClickRecognizerRef recognizer, void *context) {
-  /* UP CODE */
+  isActive = !isActive;
+  if (isActive) {
+    accel_service_set_sampling_rate(ACCEL_SAMPLING_10HZ);
+    accel_data_service_subscribe(0, NULL);
+  }
+  else {
+    accel_data_service_unsubscribe();
+  }
+
+  set_timer();
 }
 
 static void click_handler_select(ClickRecognizerRef recognizer, void *context) {
@@ -48,6 +68,26 @@ static void click_handler_down(ClickRecognizerRef recognizer, void *context) {
 
 }
 
+/* ACCELEROMETER METHODS */
+
+static void set_timer() {
+  if (isActive) timer = app_timer_register(ACCEL_REFRESH, accel_callback, NULL);
+}
+
+static void accel_callback() {
+  if (!isActive) return;
+
+  accel_service_peek(&accel);
+
+  history[last_x].x = accel.x;
+  history[last_x].y = accel.y;
+  history[last_x].z = accel.z;
+  last_x++;
+  if (last_x >= HISTORY_MAX) last_x = 0;
+
+  set_timer();
+}
+
 /* WINDOW LOAD & UNLOAD METHODS */
 
 static void window_load(Window *window) {
@@ -55,7 +95,7 @@ static void window_load(Window *window) {
   // GRect frame = window_frame = layer_get_frame(window_layer);
 
   GRect bounds = layer_get_bounds(window_layer);
-  text_layer = text_layer_create((GRect) { .origin = { 0, bounds.size.h / 2 - 10 }, .size = { bounds.size.w, 20 } });
+  text_layer = text_layer_create((GRect) { .origin = { 0, 0 }, .size = { bounds.size.w, 20 } });
   text_layer_set_text(text_layer, "press to pull pin --->");
   text_layer_set_text_alignment(text_layer, GTextAlignmentRight);
   layer_add_child(window_layer, text_layer_get_layer(text_layer));
