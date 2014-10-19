@@ -15,6 +15,7 @@ static GRect window_frame;
 static AppTimer *timer;
 /* APP MESSAGE METHODS */
 
+
 static void ping(void) {
   DictionaryIterator *hash;
   app_message_outbox_begin(&hash);
