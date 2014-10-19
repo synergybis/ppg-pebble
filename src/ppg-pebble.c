@@ -18,6 +18,7 @@
 
 static Window *window;
 static TextLayer *text_layer;
+static TextLayer *feedback_layer;
 static TextLayer *debug_layer;
 static BitmapLayer *image_layer;
 
@@ -90,13 +91,13 @@ static void playExplosion() {
   app_timer_cancel(thrownTimer);
   isActive = !isActive;
   bitmap_layer_set_bitmap(image_layer, grenadeRegular);
-  text_layer_set_text(debug_layer, "BOOM");
+  text_layer_set_text(feedback_layer, "BOOM");
 }
 static void playPinClick() {
   int key = SOUND_KEY;
   char * msg = "pullpin";
   sendString(key, msg);
-  text_layer_set_text(debug_layer, "PULLED");
+  text_layer_set_text(feedback_layer, "PULLED");
 }
 static void playWhoosh() {
   int key = SOUND_KEY;
@@ -157,7 +158,7 @@ static void accel_callback() {
     thrownTimer = app_timer_register(NADE_TIMER, playExplosion, NULL);
     accel_data_service_unsubscribe();
     last_x = 0;
-    text_layer_set_text(debug_layer, "THROWN");
+    text_layer_set_text(feedback_layer, "THROWN");
   }
   else if (isActive && scanAccelProfileWhoosh()) {
     playWhoosh();
@@ -199,9 +200,13 @@ static void window_load(Window *window) {
   bitmap_layer_set_alignment(image_layer, GAlignCenter);
   layer_add_child(window_layer, bitmap_layer_get_layer(image_layer));
 
-  debug_layer = text_layer_create((GRect) { .origin = { 0, bounds.size.h - 20 }, .size = { bounds.size.w, 20 } });
-  text_layer_set_text(debug_layer, "debug");
-  text_layer_set_text_alignment(debug_layer, GTextAlignmentRight);
+  feedback_layer = text_layer_create((GRect) { .origin = { 0, bounds.size.h - 20 }, .size = { bounds.size.w, 20 } });
+  text_layer_set_text(feedback_layer, "");
+  text_layer_set_text_alignment(feedback_layer, GTextAlignmentRight);
+  layer_add_child(window_layer, text_layer_get_layer(feedback_layer));
+
+  debug_layer = text_layer_create((GRect) { .origin = { 0, bounds.size.h - 20 }, .size = { 70, 20 } });
+  text_layer_set_text(debug_layer, "");
   layer_add_child(window_layer, text_layer_get_layer(debug_layer));
 
 }
