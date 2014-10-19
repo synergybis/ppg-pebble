@@ -11,7 +11,7 @@
 #define HISTORY_MAX 100
 #define SOUND_KEY 1234567890
 #define NADE_TIMER 5000 //ms
-#define NADE_THRESH  1000 //mG
+#define NADE_THRESH  2000 //mG
 
 /* VARIABLES & FIELDS INTIALIZERS */
 
@@ -79,6 +79,7 @@ static void playExplosion() {
   sendString(key, msg);
   app_timer_cancel(thrownTimer);
   isActive = !isActive;
+  bitmap_layer_set_bitmap(image_layer, grenadeRegular);
   text_layer_set_text(debug_layer, "BOOM");
 }
 static void playPinClick() {
@@ -105,6 +106,7 @@ static void click_handler_up(ClickRecognizerRef recognizer, void *context) {
   if (!isActive) {
     isActive = !isActive;
     vibes_short_pulse();
+    text_layer_set_text(text_layer, "");
     bitmap_layer_set_bitmap(image_layer, grenadePulled);
     accel_service_set_sampling_rate(ACCEL_SAMPLING_10HZ);
     accel_data_service_subscribe(0, NULL);
@@ -145,6 +147,7 @@ static void accel_callback() {
     last_x++;
     if (last_x >= HISTORY_MAX) {
       playExplosion();
+      vibes_double_pulse();
       accel_data_service_unsubscribe();
       last_x = 0;
     }
