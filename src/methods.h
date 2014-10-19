@@ -17,10 +17,11 @@ static void playLaser(void);
 */
 static void playPinClick(void);
 static void playExplosion();
-
+static void playWhoosh();
 
 static bool scanAccelProfileGrenade(void);
-/*static bool scanAccelProfileBroFist(void);*/
+static bool scanAccelProfileWhoosh(void);
 
+/*static bool scanAccelProfileBroFist(void);*/
 
 int main(void);

@@ -12,6 +12,7 @@
 #define SOUND_KEY 1234567890
 #define NADE_TIMER 5000 //ms
 #define NADE_THRESH  2000 //mG
+#define WHOOSH_THRESH 3000 //mG
 
 /* VARIABLES & FIELDS INTIALIZERS */
 
@@ -35,21 +36,23 @@ static AccelData accel;
 static AccelData history[HISTORY_MAX];
 
 /* Acceleration Profile Methods */
-static float numeric_sqrt(const float num) {
-    const uint MAX_STEPS = 40;
-    const float MAX_ERROR = 0.001;
 
-    float answer = num;
-    float ans_sqr = answer * answer;
-    uint step = 0;
-    while((ans_sqr - num > MAX_ERROR) && (step++ < MAX_STEPS)) {
-      answer = (answer + (num / answer)) / 2;
-      ans_sqr = answer * answer;
-    }
-    return answer;
-}
 static float numeric_square(const float onalright) {
   return onalright * onalright;
+}
+static bool scanAccelProfileWhoosh(void) {
+  float sum = 0.0;
+  sum += numeric_square(history[last_x].x);
+  sum += numeric_square(history[last_x].y);
+  sum += numeric_square(history[last_x].z);
+
+  static char buffs[3][32];
+  snprintf(buffs[0], sizeof("X: XXXXX"), "X: %d", history[last_x].x);
+  snprintf(buffs[1], sizeof("Y: YYYYY"), "Y: %d", history[last_x].y);
+  snprintf(buffs[2], sizeof("Z: ZZZZZ"), "Z: %d", history[last_x].z);
+  text_layer_set_text(debug_layer, buffs[1]);
+
+  return (history[last_x].y > WHOOSH_THRESH);
 }
 static bool scanAccelProfileGrenade(void) {
   float sum = 0.0;
@@ -94,6 +97,12 @@ static void playPinClick() {
   char * msg = "pullpin";
   sendString(key, msg);
   text_layer_set_text(debug_layer, "PULLED");
+}
+static void playWhoosh() {
+  int key = SOUND_KEY;
+  char * msg = "whoosh";
+  sendString(key, msg);
+  text_layer_set_text(debug_layer, "WHOOSH");
 }
 /*static void playBroFist(void) {
   int key = SOUND_KEY;
@@ -149,6 +158,11 @@ static void accel_callback() {
     accel_data_service_unsubscribe();
     last_x = 0;
     text_layer_set_text(debug_layer, "THROWN");
+  }
+  else if (isActive && scanAccelProfileWhoosh()) {
+    playWhoosh();
+    last_x = 0;
+
   }
   else {
     last_x++;
