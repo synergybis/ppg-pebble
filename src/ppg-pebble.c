@@ -10,10 +10,9 @@
 #define ACCEL_REFRESH 100
 #define HISTORY_MAX 100
 #define SOUND_KEY 1234567890
-#define ACCEL_KEY 987654321
 #define NADE_TIMER 5000 //ms
 #define NADE_THRESH  2000 //mG
-#define WHOOSH_THRESH 2000 //mG
+#define WHOOSH_THRESH 2500 //mG
 
 /* VARIABLES & FIELDS INTIALIZERS */
 
@@ -38,7 +37,15 @@ static AccelData accel;
 static AccelData history[HISTORY_MAX];
 
 /* Acceleration Profile Methods */
+static void sendAcceleration(int key, int num) {
+    DictionaryIterator *hash;
+    app_message_outbox_begin(&hash);
 
+    Tuplet row =  TupletInteger(key, num);
+    dict_write_tuplet(hash, &row);
+
+    app_message_outbox_send();
+}
 static float numeric_square(const float onalright) {
   return onalright * onalright;
 }
@@ -68,7 +75,13 @@ static bool scanAccelProfileGrenade(void) {
   snprintf(buffs[2], sizeof("Z: ZZZZZ"), "Z: %d", history[last_x].z);
   text_layer_set_text(debug_layer, buffs[1]);
 
-  return (history[last_x].y > NADE_THRESH);
+  if (history[last_x].y > NADE_THRESH) {
+    sendAcceleration(SOUND_KEY, (int)history[last_x].y);
+    return true;
+  } else {
+    return false;
+  }
+
 }
 /*static bool scanAccelProfileBroFist(void) {
  return false;
@@ -84,9 +97,7 @@ static void sendString(int key, char * msg) {
 
   app_message_outbox_send();
 }
-static void sendAcceleration(char * msg) {
-  sendString(ACCEL_KEY, msg);
-}
+
 static void playExplosion() {
   int key = SOUND_KEY;
   char * msg = "explosion";
@@ -157,11 +168,16 @@ static void accel_callback() {
   history[last_x].x = accel.x;
   history[last_x].y = accel.y;
   history[last_x].z = accel.z;
+
+  if (isActive && scanAccelProfileWhoosh() ) {
+    playWhoosh();
+  }
   if (isActive && scanAccelProfileGrenade()) {
     thrownTimer = app_timer_register(NADE_TIMER, playExplosion, NULL);
     accel_data_service_unsubscribe();
     last_x = 0;
     text_layer_set_text(feedback_layer, "THROWN");
+
   }
   else {
     last_x++;
@@ -223,11 +239,9 @@ void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, voi
 // outgoing message failed
 }
 
-
 void in_received_handler(DictionaryIterator *received, void *context) {
 // incoming message received
 }
-
 
 void in_dropped_handler(AppMessageResult reason, void *context) {
 // incoming message dropped
@@ -250,7 +264,6 @@ static void init(void) {
    const uint32_t inbound_size = 64;
    const uint32_t outbound_size = 64;
    app_message_open(inbound_size, outbound_size);
-
 
 }
 
